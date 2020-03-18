@@ -128,6 +128,7 @@ const sorts = {
 const stateToProps = (
   { UI },
   {
+    customSorts = {},
     data = [],
     defaultSortField = 'metadata.name',
     defaultSortFunc = undefined,
@@ -162,6 +163,9 @@ const stateToProps = (
       } else {
         sortBy = (resource) => sorts.string(_.get(resource, currentSortField, ''));
       }
+    } else if (currentSortFunc && customSorts[currentSortFunc]) {
+      // Sort resources by a function in the 'customSorts' prop
+      sortBy = customSorts[currentSortFunc];
     } else if (currentSortFunc && sorts[currentSortFunc]) {
       // Sort resources by a function in the 'sorts' object
       sortBy = sorts[currentSortFunc];
@@ -337,6 +341,7 @@ export type VirtualBodyProps = {
 
 export type TableProps = {
   customData?: any;
+  customSorts?: { [key: string]: any };
   data?: any[];
   defaultSortFunc?: string;
   defaultSortField?: string;
