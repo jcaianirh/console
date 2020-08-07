@@ -532,7 +532,13 @@ class MastheadToolbarContents_ extends React.Component {
       showAboutModal,
       statuspageData,
     } = this.state;
-    const { consoleLinks, drawerToggle, notificationsRead, canAccessNS } = this.props;
+    const {
+      consoleLinks,
+      drawerToggle,
+      notificationsRead,
+      notificationAlerts,
+      canAccessNS,
+    } = this.props;
     const launchActions = this._launchActions();
     const alertAccess = canAccessNS && !!window.SERVER_FLAGS.prometheusBaseURL;
     return (
@@ -563,6 +569,7 @@ class MastheadToolbarContents_ extends React.Component {
                   aria-label="Notification Drawer"
                   onClick={drawerToggle}
                   isRead={notificationsRead}
+                  count={notificationAlerts?.data?.length}
                 >
                   <BellIcon />
                 </NotificationBadge>
@@ -636,7 +643,10 @@ const mastheadToolbarStateToProps = (state) => ({
   clusterID: state.UI.get('clusterID'),
   user: state.UI.get('user'),
   consoleLinks: state.UI.get('consoleLinks'),
-  notificationsRead: !!state.UI.getIn(['notifications', 'isRead']),
+  // notificationsRead: !!state.UI.getIn(['notifications', 'isRead']),
+  // setting notificationsRead to true until we have a clearer strategy for read/unread notifications
+  notificationsRead: true,
+  notificationAlerts: state.UI.getIn(['monitoring', 'notificationAlerts']),
   canAccessNS: !!state[featureReducerName].get(FLAGS.CAN_GET_NS),
 });
 
