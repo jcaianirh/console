@@ -40,7 +40,7 @@ import DashboardCardLink from '@console/shared/src/components/dashboard/dashboar
 import DashboardCardTitle from '@console/shared/src/components/dashboard/dashboard-card/DashboardCardTitle';
 import AlertsBody from '@console/shared/src/components/dashboard/status-card/AlertsBody';
 import HealthBody from '@console/shared/src/components/dashboard/status-card/HealthBody';
-import { withDashboardResources } from '../../with-dashboard-resources';
+import { DashboardItemProps, withDashboardResources } from '../../with-dashboard-resources';
 import AlertItem, {
   StatusItem,
 } from '@console/shared/src/components/dashboard/status-card/AlertItem';
@@ -98,8 +98,8 @@ const cvResource: WatchK8sResource = {
   isList: false,
 };
 
-const ClusterAlerts = withDashboardResources(
-  ({ watchAlerts, stopWatchAlerts, notificationAlerts }) => {
+export const DashboardAlerts = withDashboardResources<DashboardItemProps & DashboardAlertsProps>(
+  ({ watchAlerts, stopWatchAlerts, notificationAlerts, labelFilterKey, labelFilterValue }) => {
     const hasCVResource = useFlag(FLAGS.CLUSTER_VERSION);
     const [cv, cvLoaded] = useK8sWatchResource<ClusterVersionKind>(
       hasCVResource ? cvResource : ({} as WatchK8sResource),
@@ -125,8 +125,14 @@ const ClusterAlerts = withDashboardResources(
       }) && window.SERVER_FLAGS.branding !== 'dedicated';
 
     const { t } = useTranslation();
-
-    if (hasCVResource && cvLoaded && hasAvailableUpdates(cv) && clusterVersionIsEditable) {
+    const isClusterDashboard = !labelFilterKey;
+    if (
+      hasCVResource &&
+      cvLoaded &&
+      hasAvailableUpdates(cv) &&
+      clusterVersionIsEditable &&
+      isClusterDashboard
+    ) {
       items.push(
         <StatusItem
           key="clusterUpdate"
@@ -139,8 +145,13 @@ const ClusterAlerts = withDashboardResources(
     }
 
     if (alertsLoaded && !_.isEmpty(alerts)) {
+      const filteredAlerts = isClusterDashboard
+        ? alerts
+        : alerts.filter((alert) => _.get(alert?.labels, [labelFilterKey]) === labelFilterValue);
       items.push(
-        ...alerts.map((alert) => <AlertItem key={alertURL(alert, alert.rule.id)} alert={alert} />),
+        ...filteredAlerts.map((alert) => (
+          <AlertItem key={alertURL(alert, alert.rule.id)} alert={alert} />
+        )),
       );
     }
 
@@ -248,7 +259,7 @@ export const StatusCard = connect<StatusCardProps>(mapStateToProps)(({ k8sModels
             })}
           </Gallery>
         </HealthBody>
-        <ClusterAlerts />
+        <DashboardAlerts />
       </DashboardCardBody>
     </DashboardCard>
   );
@@ -256,4 +267,9 @@ export const StatusCard = connect<StatusCardProps>(mapStateToProps)(({ k8sModels
 
 type StatusCardProps = {
   k8sModels: ImmutableMap<string, K8sKind>;
+};
+
+type DashboardAlertsProps = {
+  labelFilterKey?: string;
+  labelFilterValue?: string;
 };
